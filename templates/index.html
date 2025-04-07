@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry Pi Kamera Kontrolü</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fas fa-robot"></i> Raspberry Pi Kamera Kontrolü</h1>
+
+        <!-- Kamera Canlı Yayını -->
+        <div class="camera-container">
+            <h2><i class="fas fa-video"></i> Canlı Kamera Görüntüsü</h2>
+            <img id="video-stream" src="{{ url_for('video_feed') }}" class="camera-stream" alt="Kamera Akışı">
+        </div>
+
+        <!-- Motor Kontrol Butonları -->
+        <div class="control-container">
+            <h2><i class="fas fa-gamepad"></i> Motor Kontrolü</h2>
+            <form id="motorControlForm">
+                <div class="button-grid">
+                    <div class="placeholder"></div>
+                    <button class="button" type="button" data-command="forward"><i class="fas fa-arrow-up"></i></button>
+                    <div class="placeholder"></div>
+
+                    <button class="button" type="button" data-command="left"><i class="fas fa-arrow-left"></i></button>
+                    <div class="placeholder"></div>
+                    <button class="button" type="button" data-command="right"><i
+                            class="fas fa-arrow-right"></i></button>
+
+                    <div class="placeholder"></div>
+                    <button class="button" type="button" data-command="backward"><i
+                            class="fas fa-arrow-down"></i></button>
+                    <div class="placeholder"></div>
+                </div>
+
+                <button class="stop-button" type="button" data-command="stop"><i class="fas fa-stop"></i>
+                    Durdur</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function sendCommand(command) {
+            fetch('/send_command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: command })
+            })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Hata:', error));
+        }
+
+        document.querySelectorAll('.button, .stop-button').forEach(button => {
+            button.addEventListener('click', function () {
+                sendCommand(this.getAttribute('data-command'));
+            });
+        });
+
+        // Video akışını yenileme fonksiyonu
+        function refreshVideoStream() {
+            const videoElement = document.getElementById("video-stream");
+            const currentTime = new Date().getTime();
+            videoElement.src = "{{ url_for('video_feed') }}?t=" + currentTime;
+        }
+
+        // Her 5 saniyede bir video akışını yenile
+        setInterval(refreshVideoStream, 5000);
+    </script>
+</body>
+
+</html>
