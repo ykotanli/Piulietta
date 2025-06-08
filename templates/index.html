@@ -6,20 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raspberry Pi Kamera Kontrolü</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}">
 </head>
 
 <body>
+    <div id="gps-panel">
+        <strong>GPS:</strong>
+        <div id="gps-coords">Yükleniyor...</div>
+    </div>
+
     <div class="container">
         <h1><i class="fas fa-robot"></i> Raspberry Pi Kamera Kontrolü</h1>
 
-        <!-- Kamera Canlı Yayını -->
         <div class="camera-container">
             <h2><i class="fas fa-video"></i> Canlı Kamera Görüntüsü</h2>
             <img id="video-stream" src="{{ url_for('video_feed') }}" class="camera-stream" alt="Kamera Akışı">
         </div>
 
-        <!-- Motor Kontrol Butonları -->
         <div class="control-container">
             <h2><i class="fas fa-gamepad"></i> Motor Kontrolü</h2>
             <form id="motorControlForm">
@@ -63,15 +66,31 @@
             });
         });
 
-        // Video akışını yenileme fonksiyonu
         function refreshVideoStream() {
             const videoElement = document.getElementById("video-stream");
             const currentTime = new Date().getTime();
             videoElement.src = "{{ url_for('video_feed') }}?t=" + currentTime;
         }
 
-        // Her 5 saniyede bir video akışını yenile
         setInterval(refreshVideoStream, 5000);
+
+        function updateGPS() {
+            fetch('/gps_data')
+                .then(r => r.json())
+                .then(d => {
+                    const el = document.getElementById('gps-coords');
+                    if (d.lat && d.lon) {
+                        el.innerText = `${d.lat}, ${d.lon}`;
+                    } else {
+                        el.innerText = 'Sinyal yok';
+                    }
+                })
+                .catch(_ => {
+                    document.getElementById('gps-coords').innerText = 'Okuma hatası';
+                });
+        }
+        updateGPS();
+        setInterval(updateGPS, 1000);
     </script>
 </body>
 
